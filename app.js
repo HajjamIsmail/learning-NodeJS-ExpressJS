@@ -1,8 +1,17 @@
 const express = require('express');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+
+const Thing = require('./models/Thing');
+
+mongoose.connect('mongodb+srv://ismo01:1234@cluster0.rvscyqr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0',
+  { useNewUrlParser: true,
+    useUnifiedTopology: true })
+  .then(() => console.log('cnx mongoDB succed !'))
+  .catch(() => console.log('cnx mongoDB failed !'));
+
 
 const app = express();
-
-app.use(express.json());
 
 // adding general middleware for apply all api
 app.use((req, res, next) => {
@@ -12,12 +21,17 @@ app.use((req, res, next) => {
   next();
 });
 
+app.use(bodyParser.json());
+
 // middleware used for request post
 app.post('/api/stuff', (req, res, next) => {
-  console.log(req.body);
-  res.status(201).json({
-    message: 'Objet create !'
+  delete req.body._id;
+  const thing = new Thing({
+    ...req.body
   });
+  thing.save()
+    .then(() => res.status(201).json({ message: 'Objet enregistré !'}))
+    .catch(error => res.status(400).json({ error }));
 });
 
 // middleware used for request get
